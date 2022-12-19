@@ -42,7 +42,7 @@ app.get("/", (req, res) => {
 
 app.post("/", (req, res) => {
     console.log(req.body);
-    const student_no = req.body.student_no;
+    const patient_no = req.body.patient_no;
     const name = req.body.name;
     db.collection("patients")
       .insertOne({
@@ -61,7 +61,7 @@ app.post("/", (req, res) => {
   app.put("/:_id", (req, res) => {
     const id = req.params._id;
     const name = req.body.name;
-    db.collection("students")
+    db.collection("patients")
       .updateOne(
         {
           _id: ObjectId(id)
