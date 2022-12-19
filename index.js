@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
+const swaggerJsdoc = require('swagger-jsdoc'); 
+const swaggerUi = require('swagger-ui-express');
 const { MongoClient, ObjectId } = require("mongodb");
 const port = 5050;
 
@@ -27,6 +29,40 @@ client
     console.log("Unable to connect to Mongodb");
   });
 
+//swagger documentation for GET
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+        title: 'HOSPITAL RECORDS',
+        description: "API for hospital records",
+        contact:{
+          name: "mongoDB"
+        },
+        servers: ["http://localhost:5050"] // test for the user interface of the localhost
+    }
+  },
+  apis:["index.js"]
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use("/api-docs",swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Routes
+/**
+ * @swagger
+ * /patients:
+ * get:
+ *  descritpion: Use to request all patients
+ *  responses:
+ *     '200':
+ *        description: A sucessfull response
+ */
+
+app.get("/patients",(req, res) => {
+  console.log("request");
+  res.status(200).send("Patients Results");
+})
+
 app.get("/", (req, res) => {
   db.collection("patients")
     .find({})
@@ -35,7 +71,7 @@ app.get("/", (req, res) => {
       return res.json(records);
     })
     .catch((err) => {
-      console.log(err);
+      console.log("err");
       return res.json({ msg: "There was an error processing your query" });
     });
 });
