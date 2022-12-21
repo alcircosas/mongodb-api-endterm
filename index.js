@@ -7,7 +7,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const port = 5050;
 
 // Set up default mongoose connection
-const url = "mongodb+srv://alcircosas:groupof3@hospital.lcj2fro.mongodb.net/test";
+const url = "mongodb+srv://admin:salapang@testone.yviwfaa.mongodb.net/test";
 const client = new MongoClient(url);
 
 app.use(
@@ -28,6 +28,7 @@ client
     console.log(err);
     console.log("Unable to connect to Mongodb");
   });
+
 
 //swagger documentation for GET
 const swaggerOptions = {
@@ -76,15 +77,25 @@ app.get("/", (req, res) => {
     });
 });
 
-app.post("/", (req, res) => {
+app.post("/patients", (req, res) => {
     console.log(req.body);
-    const patient_no = req.body.patient_no;
-    const name = req.body.name;
+    const {patient_no,name,age,birthdate,address,bloodtype,gender} = req.body;
     db.collection("patients")
-      .insertOne({
-        name,
-        age
+      .insertOne({patient_no,name,age,birthdate,address,bloodtype,gender})
+      .then((records) => {
+        return res.json(records);
       })
+      .catch((err) => {
+        console.log(err);
+        return res.json({ msg: "There was an error processing your query" });
+      });
+  });
+
+  app.post("/prescriptions", (req, res) => {
+    console.log(req.body);
+    const {date,patient_no,name,diagnosis,medications} = req.body;
+    db.collection("prescriptions")
+      .insertOne({date,patient_no,name,diagnosis,medications})
       .then((records) => {
         return res.json(records);
       })
@@ -96,7 +107,7 @@ app.post("/", (req, res) => {
 
   app.put("/:_id", (req, res) => {
     const id = req.params._id;
-    const name = req.body.name;
+    const {patient_no,name,age,date,diagnosis} = req.body;
     db.collection("patients")
       .updateOne(
         {
@@ -104,7 +115,7 @@ app.post("/", (req, res) => {
         },
         {
           $set: {
-            name
+            patient_no,name,age,date,diagnosis
           }
         }
       )
