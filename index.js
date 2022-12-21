@@ -77,6 +77,8 @@ app.get("/", (req, res) => {
     });
 });
 
+//Create a patient
+
 app.post("/patients", (req, res) => {
     console.log(req.body);
     const {patient_no,name,age,birthdate,address,bloodtype,gender} = req.body;
@@ -90,6 +92,8 @@ app.post("/patients", (req, res) => {
         return res.json({ msg: "There was an error processing your query" });
       });
   });
+
+  //Create prescriptions
 
   app.post("/prescriptions", (req, res) => {
     console.log(req.body);
@@ -105,17 +109,105 @@ app.post("/patients", (req, res) => {
       });
   }); 
 
-  app.put("/:_id", (req, res) => {
+  //Delete a patient
+
+  app.delete("/patients/:patient_no", (req, res) => {
+    const _patient_no = req.params.patient_no;
+    db.collection("patients")
+      .deleteOne(
+        {
+          patient_no: _patient_no
+        })
+      .then((records) => {
+        return res.json(records);
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.json({ msg: "There was an error processing your query" });
+      });
+  });
+
+  //Delete a prescription
+
+  app.delete("/prescriptions/:_id", (req, res) => {
+    const id = req.params._id;
+    db.collection("prescriptions")
+      .deleteOne(
+        {
+          _id: ObjectId(id)
+        })
+      .then((records) => {
+        return res.json(records);
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.json({ msg: "There was an error processing your query" });
+      });
+  }); 
+
+  //Add a medication to the prescription
+
+  app.put("/prescriptions/:_id", (req, res) => {
     const id = req.params._id;
     const {patient_no,name,age,date,diagnosis} = req.body;
-    db.collection("patients")
+    db.collection("prescriptions")
       .updateOne(
         {
           _id: ObjectId(id)
         },
         {
+          $push: {
+            medications
+          }
+        }
+      )
+      .then((records) => {
+        return res.json(records);
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.json({ msg: "There was an error processing your query" });
+      });
+  });
+
+  //Remove a medication from a prescription
+
+  app.put("/prescriptions/:_id", (req, res) => {
+    const id = req.params._id;
+    const {patient_no,name,age,date,diagnosis} = req.body;
+    db.collection("prescriptions")
+      .updateOne(
+        {
+          _id: ObjectId(id)
+        },
+        {
+          $pull: {
+            medications
+          }
+        }
+      )
+      .then((records) => {
+        return res.json(records);
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.json({ msg: "There was an error processing your query" });
+      });
+  });
+
+  //update patients
+
+  app.put("/patients/:patient_no", (req, res) => {
+    const _patient_no = req.params.patient_no;
+    const {name,age,birthdate,address,bloodtype,gender} = req.body;
+    db.collection("patients")
+      .updateOne(
+        {
+          patient_no: _patient_no
+        },
+        {
           $set: {
-            patient_no,name,age,date,diagnosis
+            name,age,birthdate,address,bloodtype,gender
           }
         }
       )
