@@ -1,8 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
-const swaggerJsdoc = require('swagger-jsdoc'); 
-const swaggerUi = require('swagger-ui-express');
 const { MongoClient, ObjectId } = require("mongodb");
 const port = 5050;
 
@@ -29,42 +27,8 @@ client
     console.log("Unable to connect to Mongodb");
   });
 
-
-//swagger documentation for GET
-const swaggerOptions = {
-  swaggerDefinition: {
-    info: {
-        title: 'HOSPITAL RECORDS',
-        description: "API for hospital records",
-        contact:{
-          name: "mongoDB"
-        },
-        servers: ["http://localhost:5050"] // test for the user interface of the localhost
-    }
-  },
-  apis:["index.js"]
-};
-
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs",swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-// Routes
-/**
- * @swagger
- * /patients:
- * get:
- *  descritpion: Use to request all patients
- *  responses:
- *     '200':
- *        description: A sucessfull response
- */
-
-app.get("/patients",(req, res) => {
-  console.log("request");
-  res.status(200).send("Patients Results");
-})
-
-app.get("/", (req, res) => {
+//List patients
+app.get("/patients", (req, res) => {
   db.collection("patients")
     .find({})
     .toArray()
@@ -77,8 +41,22 @@ app.get("/", (req, res) => {
     });
 });
 
-//Create a patient
+//List medications for a given prescription
+app.get("/prescriptions/:_id", (req, res) => {
+  const id = req.params._id;
+  db.collection("prescriptions")
+    .find({_id: ObjectId(id)})
+    .toArray()
+    .then((records) => {
+      return res.json(records);
+    })
+    .catch((err) => {
+      console.log(err);
+      return res.json({ msg: "There was an error processing your query" });
+    });
+}); 
 
+//Create a patient
 app.post("/patients", (req, res) => {
     console.log(req.body);
     const {patient_no,name,age,birthdate,address,bloodtype,gender} = req.body;
@@ -94,12 +72,11 @@ app.post("/patients", (req, res) => {
   });
 
   //Create prescriptions
-
   app.post("/prescriptions", (req, res) => {
     console.log(req.body);
-    const {date,patient_no,name,diagnosis,medications} = req.body;
+    const {date,patient_no,diagnosis,medications} = req.body;
     db.collection("prescriptions")
-      .insertOne({date,patient_no,name,diagnosis,medications})
+      .insertOne({date,patient_no,diagnosis,medications})
       .then((records) => {
         return res.json(records);
       })
@@ -110,7 +87,6 @@ app.post("/patients", (req, res) => {
   }); 
 
   //Delete a patient
-
   app.delete("/patients/:patient_no", (req, res) => {
     const _patient_no = req.params.patient_no;
     db.collection("patients")
@@ -128,7 +104,6 @@ app.post("/patients", (req, res) => {
   });
 
   //Delete a prescription
-
   app.delete("/prescriptions/:_id", (req, res) => {
     const id = req.params._id;
     db.collection("prescriptions")
@@ -146,10 +121,9 @@ app.post("/patients", (req, res) => {
   }); 
 
   //Add a medication to the prescription
-
   app.put("/prescriptions/:_id", (req, res) => {
     const id = req.params._id;
-    const {patient_no,name,age,date,diagnosis} = req.body;
+    const {medications} = req.body;
     db.collection("prescriptions")
       .updateOne(
         {
@@ -171,10 +145,9 @@ app.post("/patients", (req, res) => {
   });
 
   //Remove a medication from a prescription
-
-  app.put("/prescriptions/:_id", (req, res) => {
+  app.put("/prescriptions_/:_id", (req, res) => {
     const id = req.params._id;
-    const {patient_no,name,age,date,diagnosis} = req.body;
+    const {medications} = req.body;
     db.collection("prescriptions")
       .updateOne(
         {
@@ -195,20 +168,16 @@ app.post("/patients", (req, res) => {
       });
   });
 
-  //update patients
-
+  //Update patient
   app.put("/patients/:patient_no", (req, res) => {
-    const _patient_no = req.params.patient_no;
-    const {name,age,birthdate,address,bloodtype,gender} = req.body;
+    const patient_no = req.params.patient_no;
     db.collection("patients")
       .updateOne(
         {
-          patient_no: _patient_no
+          patient_no: patient_no
         },
         {
-          $set: {
-            name,age,birthdate,address,bloodtype,gender
-          }
+          $set:req.body
         }
       )
       .then((records) => {
@@ -220,21 +189,6 @@ app.post("/patients", (req, res) => {
       });
   });
 
-  app.delete("/:_id", (req, res) => {
-    const id = req.params._id;
-    db.collection("patients")
-      .deleteOne(
-        {
-          _id: ObjectId(id)
-        })
-      .then((records) => {
-        return res.json(records);
-      })
-      .catch((err) => {
-        console.log(err);
-        return res.json({ msg: "There was an error processing your query" });
-      });
-  }); 
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
